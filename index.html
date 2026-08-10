@@ -218,6 +218,12 @@ mark{background:#f6e7a8;color:var(--ink);border-radius:3px;padding:0 1px}
 .frist{font-family:var(--mono);font-size:11.5px;color:var(--ink3);
   background:var(--raise);border-radius:4px;padding:0 4px}
 .row.ueberfaellig .frist{color:var(--signal);background:var(--signal-s);font-weight:700}
+/* nur bei einem einzelnen Termin, nicht bei einem Zeitraum */
+.frist-waehlen{display:inline-grid;place-items:center;width:12px;height:12px;
+  margin-left:3px;color:var(--ink3);vertical-align:-1px;cursor:pointer}
+.frist-waehlen:hover{color:var(--tinte)}
+.frist-waehlen svg{width:10px;height:10px}
+.row.ueberfaellig .frist-waehlen{color:var(--signal)}
 
 /* Priorität unterscheidet sich über Kontrast und Gewicht, nicht über eine
    weitere Farbe — --signal bleibt dem Überfälligen vorbehalten. */
@@ -283,6 +289,25 @@ mark{background:#f6e7a8;color:var(--ink);border-radius:3px;padding:0 1px}
 .graute.erledigt{background:var(--gut)}
 .graute.ueberfaellig{background:var(--signal)}
 .gleer{padding:26px 4px;font-size:13px;color:var(--ink3);line-height:1.6;max-width:52ch}
+
+/* ---------- Datepicker: eigenes Fenster, kein natives <input type="date"> ---------- */
+.dwueberlagerung{position:fixed;inset:0;z-index:9200;background:rgba(26,26,24,.18);
+  display:flex;justify-content:center;align-items:center;padding:18px}
+.dwueberlagerung[hidden]{display:none}
+.dwbox{width:272px;background:var(--sheet);border:1px solid var(--rule2);border-radius:14px;
+  box-shadow:0 24px 60px rgba(26,26,24,.22);padding:14px}
+.dwkopf{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:11px}
+.dwtitel{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  font-weight:700;color:var(--ink3);text-align:center;flex:1}
+.dwtage{display:grid;grid-template-columns:repeat(7,1fr);padding-bottom:4px}
+.dwtage b{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;
+  font-weight:700;color:var(--ink3);text-align:center}
+.dwraster{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.dwtag{font-size:12.5px;color:var(--ink2);text-align:center;padding:6px 0;border-radius:7px}
+.dwtag:hover{background:var(--raise)}
+.dwtag.fremd{color:var(--rule2)}
+.dwtag.heute{color:var(--tinte);font-weight:700}
+.dwtag.gewaehlt{background:var(--tinte-s);color:var(--tinte);font-weight:700}
 
 /* Kalender */
 .kalender{padding:4px 0 30px}
@@ -401,6 +426,9 @@ mark{background:#f6e7a8;color:var(--ink);border-radius:3px;padding:0 1px}
   .kein:hover{background:var(--sheet)!important}
   .kein.ueberfaellig{background:var(--signal-s)!important}
   .row.ueberfaellig .frist{background:var(--signal-s)!important}
+  .dwbox{background:var(--sheet)!important}
+  .dwtag:hover{background:var(--raise)!important}
+  .dwtag.heute,.dwtag.gewaehlt{background:var(--tinte-s)!important}
   .fortschritt-voll{background:var(--gut-s)!important}
   .kasten b{background:var(--sheet)!important}
   .row.erledigt .kasten b{background:var(--gut)!important}
@@ -483,6 +511,18 @@ mark{background:#f6e7a8;color:var(--ink);border-radius:3px;padding:0 1px}
       <span class="k">Esc</span>
     </div>
     <div class="pliste" id="pal-liste"></div>
+  </div>
+</div>
+
+<div class="dwueberlagerung" id="datumwaehler" hidden>
+  <div class="dwbox">
+    <div class="dwkopf">
+      <button class="knopf" id="dw-zurueck" title="Voriger Monat">‹</button>
+      <b class="dwtitel" id="dw-titel"></b>
+      <button class="knopf" id="dw-vor" title="Nächster Monat">›</button>
+    </div>
+    <div class="dwtage" id="dw-tage"></div>
+    <div class="dwraster" id="dw-raster"></div>
   </div>
 </div>
 
@@ -573,14 +613,14 @@ function seed(){
   const d1 = add(d, "Ein Klick aufs Kästchen hakt eine Aufgabe ab.");
   nodes[d1].task = leereAufgabe();
   const d2 = add(d, "Ein Datum mit @ macht einen Punkt von selbst zur Aufgabe: @heute.",
-    "Auch @morgen, @übermorgen und Wochentage wie @fr gehen. Beim Verlassen der Zeile steht das ausgeschriebene Datum da.");
+    "Auch @morgen, @übermorgen und Wochentage wie @fr gehen, ebenso ein eigenes Datum wie @9.3. oder @09.03.2026. Beim Verlassen der Zeile steht immer die ausgeschriebene Form TT.MM.JJJJ da. Das Kalender-Symbol neben einem Datum öffnet auch ein Auswahlfenster.");
   merkmaleSpiegeln(nodes[d2]);
   const d3 = add(d, "Priorität und Fortschritt stehen genauso im Text: !hoch und %50.",
     "Strg + K setzt die Priorität auch über die Palette — sie schreibt dasselbe Zeichen in die Zeile.");
   merkmaleSpiegeln(nodes[d3]);
   // relative Worte in der Saat, damit nichts schon beim ersten Start überfällig ist
   const d4 = add(d, "Ein Zeitraum braucht zwei Daten: @heute..fr.",
-    "Ausgeschrieben steht dort dann etwa @2026-03-02..2026-03-06. In der Notiz gilt das nicht — sie ist Prosa.");
+    "Ausgeschrieben steht dort dann etwa @02.03.2026..06.03.2026. In der Notiz gilt das nicht — sie ist Prosa.");
   merkmaleSpiegeln(nodes[d4]);
   add(d, "Strg + K führt zu den Sichten Heute, Offen und Wichtig. Sie sind nichts als gespeicherte Suchen.");
 
@@ -804,12 +844,27 @@ function alleTags(){
        gespiegelt, genau wie die Tags. Der Text ist die einzige Wahrheit;
        auch die Palettenbefehle schreiben nur hier hinein.
 
-         @2026-03-09          Frist
-         @2026-03-01..03-09   Zeitraum: Start und Frist
+         @09.03.2026          Frist
+         @01.03.2026..09.03.2026   Zeitraum: Start und Frist
          !hoch !mittel !niedrig   Priorität
-         %50                  Fortschritt                                --- */
-const DATUM = "\\d{4}-\\d{2}-\\d{2}|heute|morgen|übermorgen|uebermorgen|mo|di|mi|do|fr|sa|so";
-const FRIST_RE = new RegExp("@(" + DATUM + ")(?:\\.\\.(" + DATUM + "))?\\b", "gi");
+         %50                  Fortschritt
+
+       Getippt werden darf auch ohne führende Null (@9.3.2026) und ohne
+       Jahr (@9.3. — wie ein Wochentag relativ gerechnet). Ausgeschrieben
+       wird immer TT.MM.JJJJ. Alte @JJJJ-MM-TT-Reste werden weiter
+       gelesen, aber beim nächsten Verlassen der Zeile umgeschrieben. --- */
+
+/* Jede digit-endende Form bekommt ihr eigenes (?!\d) statt eines
+   gemeinsamen \b am Ende: \b scheitert nach einem Punkt (Nicht-Wortzeichen)
+   direkt vor einem Leerzeichen, weil dort kein Wort/Nicht-Wort-Übergang
+   liegt — @9.3. würde sonst nie erkannt. DE-mit-Jahr muss vor DE-ohne-Jahr
+   stehen, sonst frisst die kurze Form das Jahr nicht mit. */
+const DATUM = "\\d{4}-\\d{2}-\\d{2}(?!\\d)"                 // ISO, nur zum Lesen
+  + "|\\d{1,2}\\.\\d{1,2}\\.\\d{4}(?!\\d)"                  // TT.MM.JJJJ
+  + "|\\d{1,2}\\.\\d{1,2}\\.(?!\\d)"                        // TT.MM. — Jahr fehlt
+  + "|heute\\b|morgen\\b|übermorgen\\b|uebermorgen\\b"
+  + "|mo\\b|di\\b|mi\\b|do\\b|fr\\b|sa\\b|so\\b";
+const FRIST_RE = new RegExp("@(" + DATUM + ")(?:\\.\\.(" + DATUM + "))?", "gi");
 const PRIO_RE = /!(hoch|mittel|niedrig)\b/gi;
 const PROZENT_RE = /%(100|\d{1,2})\b/g;
 const WOCHENTAGE = ["so", "mo", "di", "mi", "do", "fr", "sa"];
@@ -820,10 +875,42 @@ function alsISO(d){
   return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
 }
 function heuteISO(){ return alsISO(new Date()); }
+function alsDE(iso){
+  const [j, m, t] = iso.split("-");
+  return t + "." + m + "." + j;
+}
+// new Date(jahr, monat-1, tag) rollt ungueltige Daten (31.02.) still auf
+// einen anderen Tag um — das reicht hier nicht, deshalb Rueckvergleich.
+function istGueltig(tag, monat, jahr){
+  const d = new Date(jahr, monat - 1, tag);
+  return d.getFullYear() === jahr && d.getMonth() === monat - 1 && d.getDate() === tag;
+}
 
 function loeseDatum(wort){
   const w = wort.toLowerCase();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(w)) return w;
+
+  let m = w.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);      // TT.MM.JJJJ
+  if (m){
+    const tag = Number(m[1]), monat = Number(m[2]), jahr = Number(m[3]);
+    return istGueltig(tag, monat, jahr) ? alsISO(new Date(jahr, monat - 1, tag)) : null;
+  }
+
+  m = w.match(/^(\d{1,2})\.(\d{1,2})\.$/);                  // TT.MM. — ohne Jahr
+  if (m){
+    const tag = Number(m[1]), monat = Number(m[2]);
+    const heute = new Date(); heute.setHours(0, 0, 0, 0);
+    const jahr = heute.getFullYear();
+    for (const j of [jahr, jahr + 1]){
+      if (!istGueltig(tag, monat, j)) continue;             // z. B. 29.02. in einem Nicht-Schaltjahr
+      const kandidat = new Date(j, monat - 1, tag);
+      if (j === jahr && kandidat < heute) continue;         // dieses Jahr, aber schon vorbei
+      return alsISO(kandidat);
+    }
+    return null;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(w)) return w;              // alte ISO-Schreibweise, nur lesen
+
   const d = new Date();
   if (w === "heute") return alsISO(d);
   if (w === "morgen"){ d.setDate(d.getDate() + 1); return alsISO(d); }
@@ -969,6 +1056,7 @@ let titelZeigt = null;   // welcher Punkt gerade als Titel steht
 
 const CARET_SVG = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1 L8 5 L2 9 Z" fill="currentColor"/></svg>';
 const HAKEN_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.3 L4.8 8.6 L9.5 3.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const KALENDER_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="1.5" y="2.5" width="9" height="8" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="M1.5 5 H10.5 M4 1.2 V3.3 M8 1.2 V3.3" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>';
 
 function buildRow(id){
   const el = document.createElement("div");
@@ -1121,6 +1209,12 @@ function schmuecke(text, mitMerkmalen){
       s = s.replace(re, "\u0001$1\u0002");
     }
     s = s.replace(/\u0001/g, "<mark>").replace(/\u0002/g, "</mark>");
+    // Datepicker-Symbol nur bei einem einzelnen Termin, nicht bei einem
+    // Zeitraum — der bleibt vorerst reine Tippsache.
+    if (p.klasse === "frist" && p.t.indexOf("..") === -1){
+      s += '<span class="frist-waehlen" data-treffer="' + escHtml(p.t) +
+           '" title="Datum wählen">' + KALENDER_SVG + '</span>';
+    }
     return p.klasse ? '<span class="' + p.klasse + '">' + s + "</span>" : s;
   }).join("");
 }
@@ -1330,6 +1424,10 @@ document.addEventListener("keydown", e => {
     return;
   }
   if (palOffen) return;
+  if (waehlerOffen){
+    if (e.key === "Escape"){ e.preventDefault(); datumWaehlerSchliessen(); }
+    return;
+  }
 
   if (mod && e.shiftKey && e.key.toLowerCase() === "f"){
     e.preventDefault();
@@ -1583,9 +1681,9 @@ function fristAusschreiben(n){
   const neu = n.text.replace(FRIST_RE, (ganz, von, bis) => {
     const a = loeseDatum(von);
     if (!a) return ganz;
-    if (!bis) return "@" + a;
+    if (!bis) return "@" + alsDE(a);
     const b = loeseDatum(bis);
-    return b ? "@" + a + ".." + b : ganz;
+    return b ? "@" + alsDE(a) + ".." + alsDE(b) : ganz;
   });
   if (neu === n.text) return false;
   begin("Frist");
@@ -1993,14 +2091,104 @@ $("#suche-x").addEventListener("click", () => {
   if (r) focusNode(r.id, "text", 0);
 });
 
-// Klick auf ein Tag sucht danach
+// Klick auf ein Tag sucht danach, Klick auf das Kalender-Symbol öffnet den Datepicker
 rowsEl.addEventListener("mousedown", e => {
   if (e.target.classList && e.target.classList.contains("tag")){
     e.preventDefault();
     setzeSuche(e.target.textContent.trim());
     sucheEl.focus();
+    return;
+  }
+  const waehlen = e.target.closest && e.target.closest(".frist-waehlen");
+  if (waehlen){
+    e.preventDefault();
+    const row = waehlen.closest(".row");
+    const feldEl = waehlen.closest("[data-field]");
+    if (row && feldEl) datumWaehlerOeffnen(row.dataset.id, feldEl.dataset.field, waehlen.dataset.treffer);
   }
 });
+
+/* --- Datepicker: eigenes Fenster statt <input type="date">, das ist nicht
+       gestaltbar und wirkt wie ein Fremdkörper. Ersetzt gezielt den
+       angeklickten Treffertext, genau wie eine Handeingabe es täte —
+       task.due/task.start bleiben ISO, nur der Text wird deutsch. --- */
+let waehlerOffen = false;
+let waehlerKontext = null;   // { id, feld, treffer, monat }
+const dwEl = $("#datumwaehler");
+
+function datumWaehlerOeffnen(id, feld, treffer){
+  const iso = loeseDatum(treffer.slice(1)) || heuteISO();
+  waehlerKontext = { id, feld, treffer, monat: tagAus(iso) };
+  waehlerOffen = true;
+  dwEl.hidden = false;
+  datumWaehlerZeichnen();
+}
+function datumWaehlerSchliessen(){
+  waehlerOffen = false;
+  dwEl.hidden = true;
+  waehlerKontext = null;
+}
+function datumWaehlerBlaettern(r){
+  waehlerKontext.monat.setMonth(waehlerKontext.monat.getMonth() + r);
+  datumWaehlerZeichnen();
+}
+function datumWaehlerZeichnen(){
+  const { monat, treffer } = waehlerKontext;
+  const monatISO = alsISO(monat).slice(0, 7);
+  $("#dw-titel").textContent = MONAT_FMT.format(monat);
+
+  const koepfe = $("#dw-tage");
+  if (!koepfe.childElementCount){
+    for (let i = 0; i < 7; i++){
+      const s = document.createElement("b");
+      s.textContent = WOCHENTAG_FMT.format(tagAus(plusTage(aufMontag(monatISO + "-01"), i)));
+      koepfe.appendChild(s);
+    }
+  }
+
+  const gewaehlt = loeseDatum(treffer.slice(1));
+  const heute = heuteISO();
+  const raster = $("#dw-raster");
+  raster.textContent = "";
+  let w = aufMontag(monatISO + "-01");
+  const letzter = plusTage(tagAus(monatISO + "-01").getMonth() === 11
+    ? (Number(monatISO.slice(0, 4)) + 1) + "-01-01" : monatISO.slice(0, 5) +
+      String(tagAus(monatISO + "-01").getMonth() + 2).padStart(2, "0") + "-01", -1);
+  while (w <= letzter){
+    for (let i = 0; i < 7; i++){
+      const tagISO = plusTage(w, i);
+      const b = document.createElement("button");
+      b.className = "dwtag"
+        + (tagISO.slice(0, 7) !== monatISO ? " fremd" : "")
+        + (tagISO === heute ? " heute" : "")
+        + (tagISO === gewaehlt ? " gewaehlt" : "");
+      b.textContent = String(tagAus(tagISO).getDate());
+      b.addEventListener("click", () => datumWaehlerUebernehmen(tagISO));
+      raster.appendChild(b);
+    }
+    w = plusTage(w, 7);
+  }
+}
+function datumWaehlerUebernehmen(iso){
+  const { id, feld, treffer } = waehlerKontext;
+  datumWaehlerSchliessen();
+  const n = nodes[id];
+  if (!n) return;
+  const alt = feld === "note" ? n.note : n.text;
+  if (!alt || alt.indexOf(treffer) === -1) return;   // Zeile hat sich inzwischen geändert
+  begin("Datum wählen");
+  touch(id);
+  const neu = alt.replace(treffer, "@" + alsDE(iso));
+  if (feld === "note") n.note = neu; else n.text = neu;
+  n.modified = Date.now();
+  merkmaleSpiegeln(n);
+  commit();
+  lastTextTx = null;
+  render(false);   // die Zeile selbst ist die Rückmeldung, kein toast
+}
+$("#dw-zurueck").addEventListener("click", () => datumWaehlerBlaettern(-1));
+$("#dw-vor").addEventListener("click", () => datumWaehlerBlaettern(1));
+dwEl.addEventListener("mousedown", e => { if (e.target === dwEl) datumWaehlerSchliessen(); });
 
 function favUmschalten(id){
   const n = nodes[id];
@@ -2341,7 +2529,7 @@ function zeichneGantt(){
     const leer = document.createElement("div");
     leer.className = "gleer";
     leer.textContent = "Noch nichts mit Datum. Ein Punkt kommt hierher, sobald er eines trägt: "
-      + "@2026-03-09 setzt eine Frist, @2026-03-02..2026-03-06 einen Zeitraum. "
+      + "@09.03.2026 setzt eine Frist, @02.03.2026..06.03.2026 einen Zeitraum. "
       + "Übergeordnete Punkte fassen zusammen, was darunter liegt.";
     ganttEl.appendChild(leer);
     return;
@@ -2427,13 +2615,13 @@ function zeichneGantt(){
         const r = document.createElement("i");
         r.className = "graute " + zustand;
         r.style.left = (bei(z.s.von) + (0.5 / tage) * 100) + "%";
-        r.title = z.s.von;
+        r.title = alsDE(z.s.von);
         bahn.appendChild(r);
       } else {
         const b = spalte("gbalken " + (z.s.eigen ? zustand : "summe"));
         b.style.left = bei(z.s.von) + "%";
         b.style.width = ((tageZwischen(z.s.von, z.s.bis) + 1) / tage) * 100 + "%";
-        b.title = z.s.von + " bis " + z.s.bis + (z.s.eigen ? "" : " (zusammengefasst)");
+        b.title = alsDE(z.s.von) + " bis " + alsDE(z.s.bis) + (z.s.eigen ? "" : " (zusammengefasst)");
         if (z.s.eigen && n.task && n.task.progress){
           const f = document.createElement("i");
           f.className = "gfuell";
@@ -2482,7 +2670,7 @@ function eintragKnopf(e, klasse){
   const b = document.createElement("button");
   b.className = klasse + " " + eintragKlasse(e.n);
   b.textContent = kalenderText(e.n);
-  b.title = e.von === e.bis ? e.von : e.von + " bis " + e.bis;
+  b.title = e.von === e.bis ? alsDE(e.von) : alsDE(e.von) + " bis " + alsDE(e.bis);
   b.addEventListener("click", () => { setzeAnsicht("gliederung"); springeZu(e.id); });
   return b;
 }

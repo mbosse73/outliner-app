@@ -43,7 +43,7 @@ Globale Suche als gefilterte Gliederung, Tags per `#`, Anheften, Befehlspalette 
 ### Stufe 3 — Aufgaben *(fertig)*
 Status, Priorität, Start- und Fälligkeitsdatum, Fortschritt als optionale Eigenschaften eines Punktes, per Tastatur inline gesetzt. Sichten „Heute", „Offen", „Wichtig". Überfälliges in Signalrot.
 
-Abgehakt wird per Klick aufs Kästchen oder über die Befehlspalette. Alles Übrige steht als Zeichen im Text und wird von dort ins Modell gespiegelt — dieselbe Bauart wie die Tags: `@2026-03-09` die Frist, `@von..bis` der Zeitraum, `!hoch` die Priorität, `%50` der Fortschritt. Auch der Palettenbefehl für die Priorität schreibt nur dieses Zeichen in die Zeile; damit bleibt der Text die einzige Wahrheit und es gibt keinen zweiten Ort, der abgeglichen werden müsste.
+Abgehakt wird per Klick aufs Kästchen oder über die Befehlspalette. Alles Übrige steht als Zeichen im Text und wird von dort ins Modell gespiegelt — dieselbe Bauart wie die Tags: `@09.03.2026` die Frist, `@von..bis` der Zeitraum, `!hoch` die Priorität, `%50` der Fortschritt. Getippt wird deutsch, auch ohne führende Null oder Jahr (`@9.3.`); intern bleibt ausschließlich ISO — nur die Textsyntax ist deutsch, `task.due` bleibt Wahrheit fürs Modell. Ein kleines Kalender-Symbol neben einem einzelnen Termin öffnet zusätzlich ein selbst gestaltetes Auswahlfenster, kein natives `<input type="date">`. Auch der Palettenbefehl für die Priorität schreibt nur dieses Zeichen in die Zeile; damit bleibt der Text die einzige Wahrheit und es gibt keinen zweiten Ort, der abgeglichen werden müsste.
 
 Die Sichten sind gespeicherte Suchen (`!heute`, `!offen`, `!wichtig`), keine eigene Ansicht — dieselbe Entscheidung wie oben, nur eine Ebene tiefer.
 

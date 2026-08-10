@@ -53,14 +53,18 @@ Alles Weitere wird getippt, nicht ausgewählt — Zeichen im Text, genau wie ein
 
 | Geschrieben | Bedeutung |
 |---|---|
-| `@2026-03-09` | Fälligkeit |
+| `@09.03.2026` | Fälligkeit |
+| `@9.3.2026` | dasselbe, auch ohne führende Nullen |
+| `@9.3.` | ohne Jahr — dieses Jahr, oder falls schon vorbei, das nächste |
 | `@heute` `@morgen` `@übermorgen` | von heute aus gerechnet |
 | `@mo` … `@so` | der nächste solche Wochentag |
-| `@2026-03-02..2026-03-06` | Zeitraum: Start und Fälligkeit |
+| `@01.03.2026..09.03.2026` | Zeitraum: Start und Fälligkeit |
 | `!hoch` `!mittel` `!niedrig` | Priorität |
 | `%50` | Fortschritt |
 
-Beim Verlassen der Zeile wird aus `@morgen` das ausgeschriebene Datum, damit Text und gespeicherte Frist nicht ab dem nächsten Tag auseinanderlaufen. Ein Punkt mit einem dieser Zeichen wird dadurch von selbst zur Aufgabe. Überfälliges steht in Signalrot.
+Beim Verlassen der Zeile wird jede dieser Formen zu `TT.MM.JJJJ` ausgeschrieben, damit Text und gespeicherte Frist nicht auseinanderlaufen — auch eine ältere Sicherung mit `@2026-03-09` wird beim nächsten Bearbeiten so umgeschrieben. Ein Punkt mit einem dieser Zeichen wird dadurch von selbst zur Aufgabe. Überfälliges steht in Signalrot.
+
+Neben einem einzelnen Termin (nicht bei einem Zeitraum) erscheint ein kleines Kalender-Symbol. Ein Klick öffnet ein eigenes Auswahlfenster im Stil der App — kein Formularfeld des Browsers — und schreibt das gewählte Datum in die Zeile.
 
 Die Priorität lässt sich auch über die Palette setzen — der Befehl schreibt dasselbe Zeichen in die Zeile. Der Text bleibt so die einzige Wahrheit, und beide Wege führen zum selben Ergebnis.
 
