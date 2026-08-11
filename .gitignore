@@ -6,3 +6,7 @@ desktop.ini
 # Sicherungen aus der App
 *_20*.json
 *_20*.md
+
+# Pruefwerkzeug (tests/) — nur das npm-Paket, nicht die Suiten selbst
+tests/node_modules/
+tests/package-lock.json
