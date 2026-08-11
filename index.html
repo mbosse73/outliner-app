@@ -369,26 +369,52 @@ mark{background:#f6e7a8;color:var(--ink);border-radius:3px;padding:0 1px}
 
 /* Mindmap — SVG zieht nur die Linien, die Beschriftungen liegen als HTML darueber.
    Die Karte bekommt ihre Groesse aus der Blattzahl; passt sie nicht, rollt sie
-   in ihrer eigenen Flaeche, statt die Seite breit zu machen. */
-.mindmap{overflow:auto;max-height:76vh;border-radius:10px}
+   in ihrer eigenen Flaeche, statt die Seite breit zu machen. Die Leiste
+   (.mmkopf) steht darueber und rollt nicht mit — deshalb liegt overflow auf
+   .mmflaeche, nicht auf .mindmap selbst. */
+.mindmap{padding:2px 0 30px}
+.mmkopf{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  flex-wrap:wrap;padding:2px 0 12px}
+.mmgruppe{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.mmfeld{display:flex;align-items:center;gap:8px}
+.mmfeld b{font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;font-weight:700;color:var(--ink3)}
+.mmtypen{display:flex;gap:2px;padding:2px;border-radius:9px;
+  background:var(--paper);border:1px solid var(--rule)}
+.mmtyp{font-size:12px;color:var(--ink3);padding:3px 10px;border-radius:7px}
+.mmtyp:hover{color:var(--ink)}
+.mmtyp.an{background:var(--tinte-s);color:var(--tinte);font-weight:600}
+.mmfarben{display:flex;gap:5px}
+.mmfarbe{width:19px;height:19px;border-radius:50%;border:2px solid transparent;
+  padding:0;position:relative}
+.mmfarbe:hover{border-color:var(--rule2)}
+.mmfarbe.an{border-color:var(--ink)}
+.mmfarbe i{position:absolute;inset:3px;border-radius:50%}
+.mmaktionen{display:flex;align-items:center;gap:6px}
+.mmflaeche{overflow:auto;max-height:70vh;border-radius:10px;
+  border:1px solid var(--rule)}
 .mkarte{position:relative}
 .mkarte svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.mast{position:absolute;transform:translate(-50%,-50%);max-width:130px;
-  font-size:12.5px;line-height:1.3;color:var(--ink2);background:var(--sheet);
-  border:1px solid var(--rule);border-radius:8px;padding:4px 9px;
+.mast{position:absolute;transform:translate(-50%,-50%);max-width:150px;
+  font-size:12.5px;line-height:1.3;
+  border:1px solid transparent;border-radius:20px;padding:5px 12px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  transition:border-color .14s,color .14s}
-.mast:hover{border-color:var(--tinte);color:var(--tinte);z-index:2}
+  transition:border-color .14s}
+.mast:hover{border-color:var(--ink);z-index:2}
 /* nach aussen wachsen statt um den Punkt herum — sonst stossen die
-   Beschriftungen zweier Ringe aneinander */
+   Beschriftungen zweier Ringe aneinander. Baumdiagramm und Zeitachse
+   zentrieren stattdessen ueber dem Punkt (.flach). */
 .mast.rechts{transform:translate(3px,-50%)}
 .mast.links{transform:translate(calc(-100% - 3px),-50%)}
-.mast.mitte{font-family:var(--serif);font-size:16px;color:var(--ink);
+.mast.flach{transform:translate(-50%,-50%)}
+.mast.eckig{border-radius:6px}
+.mast.mitte{font-family:var(--serif);font-size:16px;
   border-color:var(--rule2);max-width:220px;padding:6px 13px;
   transform:translate(-50%,-50%);z-index:3}
-.mast.erledigt{color:var(--ink3);text-decoration:line-through;
-  text-decoration-color:var(--rule2)}
-.mast.ueberfaellig{border-color:var(--signal);color:var(--signal)}
+.mast.erledigt{opacity:.55;text-decoration:line-through}
+.mast.ueberfaellig{border-color:var(--signal);border-width:2px}
+.mfalt{font-family:var(--mono);font-size:10px;opacity:.75;margin-right:5px}
+.mfalt:hover{opacity:1}
 
 /* Die Kopfzeile ist eng. Wird es zu schmal, weicht die Umschaltleiste, bevor
    sie den Pfad zerdrueckt — Strg+K fuehrt weiterhin zu jeder Ansicht. */
@@ -417,7 +443,8 @@ mark{background:#f6e7a8;color:var(--ink);border-radius:3px;padding:0 1px}
   .gbalken.erledigt{background:var(--gut-s)!important}
   .gbalken.ueberfaellig{background:var(--signal-s)!important}
   .gbalken.summe{background:var(--ink3)!important}
-  .mast{background:var(--sheet)!important}
+  .mmtypen,.mmflaeche{background:var(--paper)!important}
+  .mmtyp.an{background:var(--tinte-s)!important}
   .knopf,.kmodi{background:var(--paper)!important}
   .knopf:hover{background:var(--raise)!important}
   .kmodus.an{background:var(--tinte-s)!important}
@@ -470,6 +497,8 @@ mark{background:#f6e7a8;color:var(--ink);border-radius:3px;padding:0 1px}
       <hr class="nur-fokus">
       <button data-act="zweig-json" class="nur-fokus">Diesen Zweig sichern (.json)</button>
       <button data-act="zweig-md" class="nur-fokus">Diesen Zweig als Markdown (.md)</button>
+      <hr class="nur-mindmap">
+      <button data-act="mm-export" class="nur-mindmap">Mindmap als interaktives HTML (.html)</button>
       <hr>
       <button data-act="open">Öffnen (.json oder .md) …</button>
       <hr>
@@ -549,6 +578,51 @@ const KALENDERMODI = ["monat", "woche", "tag"];
 let ansicht = "gliederung";
 let kalenderModus = "monat";
 let kalenderTag = null;   // Anker; beim Start immer heute, nie gespeichert
+
+// Farbthema und Anordnung der Mindmap — reine Darstellungswahl, unabhaengig
+// vom Datenmodell. mmZu haelt Astknoten, die in der Mindmap zugeklappt sind;
+// das ist eigens von node.collapsed (der Gliederung) und wird nicht gespeichert.
+const MINDMAP_THEMEN = {
+  tinte: {
+    wurzel: { bg: "#2f3a8c", fg: "#f6f5ff" },
+    aeste: [
+      { fg: "#4d5aa8", bg: "#eceefa", linie: "#8891c9" },
+      { fg: "#7a4f2a", bg: "#f5ede2", linie: "#c7a578" },
+      { fg: "#2f6b52", bg: "#e8f2ec", linie: "#7fae97" },
+      { fg: "#8a3a63", bg: "#f6e8ef", linie: "#c98fac" },
+      { fg: "#6b6130", bg: "#f2efdd", linie: "#a99a63" },
+      { fg: "#2e6b8a", bg: "#e6eef7", linie: "#7ea0c4" }
+    ]
+  },
+  granit: {
+    wurzel: { bg: "#2b2c30", fg: "#f4f4f2" },
+    aeste: [
+      { fg: "#5c5e66", bg: "#eeeef0", linie: "#a3a5ac" },
+      { fg: "#6b6d74", bg: "#eeeef0", linie: "#a9abb1" },
+      { fg: "#2452c9", bg: "#e6ecfb", linie: "#7c93d9" },
+      { fg: "#4a4c52", bg: "#eceded", linie: "#8f9198" },
+      { fg: "#57595f", bg: "#eeeef0", linie: "#9a9ca3" },
+      { fg: "#1f3fae", bg: "#e3e9fa", linie: "#7488cf" }
+    ]
+  },
+  ozean: {
+    wurzel: { bg: "#0f4c4c", fg: "#eefaf8" },
+    aeste: [
+      { fg: "#1f6e75", bg: "#e4f2f1", linie: "#6fa8ab" },
+      { fg: "#2e5b8a", bg: "#e6eef7", linie: "#7ea0c4" },
+      { fg: "#b5563a", bg: "#faeae4", linie: "#d99a83" },
+      { fg: "#2f7a6b", bg: "#e6f2ee", linie: "#7fb3a4" },
+      { fg: "#3a6b8a", bg: "#e6eef5", linie: "#82a8c2" },
+      { fg: "#8a5a2e", bg: "#f5ece0", linie: "#c99c66" }
+    ]
+  }
+};
+const MINDMAP_FARBEN = Object.keys(MINDMAP_THEMEN);
+const MINDMAP_TYP_LABEL = { radial: "Radial", baum: "Baumdiagramm", zeit: "Zeitachse" };
+const MINDMAP_TYPEN = Object.keys(MINDMAP_TYP_LABEL);
+let mindmapTyp = "radial";
+let mindmapFarbe = "tinte";
+let mmZu = new Set();
 
 function uid(){
   return "n" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -1800,7 +1874,7 @@ function scheduleSave(){
 }
 function save(){
   try{
-    localStorage.setItem(STORE_KEY, JSON.stringify({ v: 1, zoomId, ansicht, kalenderModus, nodes }));
+    localStorage.setItem(STORE_KEY, JSON.stringify({ v: 1, zoomId, ansicht, kalenderModus, mindmapTyp, mindmapFarbe, nodes }));
     savedAt = new Date();
     $("#status").textContent = statusText();
   } catch (err){
@@ -1831,6 +1905,8 @@ function load(){
     // Aeltere Staende kennen das Feld nicht und landen auf der Gliederung
     ansicht = ANSICHTEN.indexOf(data.ansicht) >= 0 ? data.ansicht : "gliederung";
     kalenderModus = KALENDERMODI.indexOf(data.kalenderModus) >= 0 ? data.kalenderModus : "monat";
+    mindmapTyp = MINDMAP_TYPEN.indexOf(data.mindmapTyp) >= 0 ? data.mindmapTyp : "radial";
+    mindmapFarbe = MINDMAP_FARBEN.indexOf(data.mindmapFarbe) >= 0 ? data.mindmapFarbe : "tinte";
     for (const id in nodes){
       const n = nodes[id];
       if (!Array.isArray(n.children)) n.children = [];
@@ -2011,6 +2087,7 @@ $("#btn-file").addEventListener("click", e => {
   e.stopPropagation();
   // Zweigeintraege nur im Fokus — an der Wurzel waeren sie mit den oberen gleich
   menuEl.querySelectorAll(".nur-fokus").forEach(el => { el.hidden = zoomId === ROOT; });
+  menuEl.querySelectorAll(".nur-mindmap").forEach(el => { el.hidden = ansicht !== "mindmap"; });
   menuEl.classList.toggle("open");
 });
 document.addEventListener("click", () => closeMenu());
@@ -2022,6 +2099,7 @@ menuEl.addEventListener("click", e => {
   if (act === "md") exportMarkdown();
   if (act === "zweig-json") exportJSON(zoomId);
   if (act === "zweig-md") exportMarkdown(zoomId);
+  if (act === "mm-export") exportMindmapHTML();
   if (act === "open") $("#file-input").click();
   if (act === "reset"){
     if (confirm("Der gesamte Inhalt wird gelöscht. Sicherung vorher speichern?\n\nAbbrechen drücken, wenn du erst sichern willst.")){
@@ -2313,8 +2391,24 @@ const BEFEHLE = [
   { a: "Ansicht", t: "Ein- und ausklappen", m: "Alle Zweige umschalten", run: faltenUmschalten },
   { a: "Ansicht", t: "Fokus verlassen", m: "Eine Ebene hinaus", run: zoomOut },
   { a: "Ansicht", t: "Suche zurücksetzen", m: "Ganze Gliederung zeigen", run: () => setzeSuche("") },
+  { a: "Mindmap", t: "Alle Äste aufklappen", m: "Zuklappen in der Mindmap zurücksetzen",
+    run: () => { mmZu.clear(); render(false); } },
+  { a: "Mindmap", t: "Farbthema Tinte", m: "auch: Granit, Ozean",
+    run: () => { mindmapFarbe = "tinte"; scheduleSave(); render(false); } },
+  { a: "Mindmap", t: "Farbthema Granit", m: "auch: Tinte, Ozean",
+    run: () => { mindmapFarbe = "granit"; scheduleSave(); render(false); } },
+  { a: "Mindmap", t: "Farbthema Ozean", m: "auch: Tinte, Granit",
+    run: () => { mindmapFarbe = "ozean"; scheduleSave(); render(false); } },
+  { a: "Mindmap", t: "Anordnung Radial", m: "auch: Baumdiagramm, Zeitachse",
+    run: () => { mindmapTyp = "radial"; scheduleSave(); render(false); } },
+  { a: "Mindmap", t: "Anordnung Baumdiagramm", m: "auch: Radial, Zeitachse",
+    run: () => { mindmapTyp = "baum"; scheduleSave(); render(false); } },
+  { a: "Mindmap", t: "Anordnung Zeitachse", m: "Ordnet die Äste nach Fälligkeit",
+    run: () => { mindmapTyp = "zeit"; scheduleSave(); render(false); } },
   { a: "Datei", t: "Sicherung speichern", m: "JSON, verlustfrei", run: exportJSON },
   { a: "Datei", t: "Als Markdown speichern", m: "Eingerückte Liste", run: exportMarkdown },
+  { a: "Datei", t: "Mindmap als interaktives HTML", m: "Eigenständige Ansicht, außerhalb der App lauffähig",
+    run: exportMindmapHTML },
   { a: "Datei", t: "Sicherung öffnen", m: "Ersetzt den Inhalt", run: () => $("#file-input").click() }
 ];
 
@@ -2860,71 +2954,283 @@ function zeichneKalenderTag(anker, eintraege){
 
 /* Mindmap: das SVG zieht nur die Verbindungen, die Beschriftungen liegen als
    HTML darueber — nur so bekommen sie Schriftvariablen, Ellipse und Zeiger. */
-function zeichneMindmap(){
-  mindmapEl.textContent = "";
-  const sichtbar = new Set(rowIndex.map(r => r.id));
-  const kinder = id => (nodes[id] ? nodes[id].children.filter(c => sichtbar.has(c)) : []);
-
-  const blaetter = id => {
-    const k = kinder(id);
-    return k.length ? k.reduce((s, c) => s + blaetter(c), 0) : 1;
-  };
-  let tiefstes = 0;
-  rowIndex.forEach(r => { if (r.depth + 1 > tiefstes) tiefstes = r.depth + 1; });
-  tiefstes = Math.max(1, tiefstes);
-
-  /* Der aeussere Ring muss allen Blaettern Platz lassen: bei L Blaettern
-     braucht sein Umfang mindestens L * ZEILE. Daraus folgt der Radius —
-     geraten wird hier nichts. */
+// Radial (der urspruengliche Aufbau): Bogenlaenge je Ring nach Blattzahl,
+// damit sich nichts ueberlappt. farbindex wird beim ersten Ast (Kind der
+// Wurzel) vergeben und an dessen ganzen Teilbaum weitergereicht.
+function legeRadialWurzel(wurzel, kinder, blaetter, tiefstes, punkte){
   const ZEILE = 42;
-  const blattzahl = Math.max(1, blaetter(zoomId));
+  const blattzahl = Math.max(1, blaetter(wurzel));
   const noetig = (blattzahl * ZEILE) / (2 * Math.PI);
-  // Der Ringabstand muss zudem eine Beschriftung fassen, sonst ragt sie in
-  // den naechsten Ring — 130px Textbreite plus Luft.
   const schritt = Math.min(240, Math.max(150, noetig / tiefstes));
-  const rand = 165;                       // Platz fuer die Beschriftungen aussen
+  const rand = 165;
   const seite = 2 * schritt * tiefstes + rand * 2;
   const breite = Math.max(mindmapEl.clientWidth || 900, seite);
   const hoehe = seite;
-
-  const karte = document.createElement("div");
-  karte.className = "mkarte";
-  karte.style.width = breite + "px";
-  karte.style.height = hoehe + "px";
   const cx = breite / 2, cy = hoehe / 2;
 
-  const punkte = [];
-  const lege = (id, tiefe, a0, a1) => {
+  let naechsterFarbindex = 0;
+  const lege = (id, tiefe, a0, a1, farbindex) => {
     const w = (a0 + a1) / 2;
     const r = tiefe * schritt;
     punkte.push({ id, tiefe, x: cx + Math.cos(w) * r, y: cy + Math.sin(w) * r,
-                  rechts: Math.cos(w) >= 0 });
+                  rechts: Math.cos(w) >= 0, farbindex });
     const k = kinder(id);
     if (!k.length) return;
     const gesamt = blaetter(id) || 1;
     let a = a0;
     for (const c of k){
       const anteil = blaetter(c) / gesamt;
-      lege(c, tiefe + 1, a, a + (a1 - a0) * anteil);
+      const fi = tiefe === 0 ? naechsterFarbindex++ : farbindex;
+      lege(c, tiefe + 1, a, a + (a1 - a0) * anteil, fi);
       a += (a1 - a0) * anteil;
     }
   };
-  lege(zoomId, 0, -Math.PI / 2, -Math.PI / 2 + 2 * Math.PI);
+  lege(wurzel, 0, -Math.PI / 2, -Math.PI / 2 + 2 * Math.PI, null);
+  return { breite, hoehe };
+}
+
+// Baumdiagramm: von oben nach unten, Blattzahl bestimmt die Spaltenbreite
+// statt einer Bogenlaenge — sonst dieselbe Aufteilung wie beim Radial.
+function legeBaum(wurzel, kinder, blaetter, tiefstes, punkte){
+  const SPALTE = 150, EBENE = 130, RAND = 90;
+  const blattzahl = Math.max(1, blaetter(wurzel));
+  const breite = Math.max(mindmapEl.clientWidth || 900, blattzahl * SPALTE + RAND * 2);
+  const hoehe = tiefstes * EBENE + RAND * 2 + 30;
+
+  let naechsterFarbindex = 0;
+  const lege = (id, tiefe, x0, x1, farbindex) => {
+    const x = RAND + (x0 + x1) / 2 * (breite - RAND * 2);
+    const y = RAND + tiefe * EBENE;
+    punkte.push({ id, tiefe, x, y, rechts: true, farbindex });
+    const k = kinder(id);
+    if (!k.length) return;
+    const gesamt = blaetter(id) || 1;
+    let a = x0;
+    for (const c of k){
+      const anteil = blaetter(c) / gesamt;
+      const fi = tiefe === 0 ? naechsterFarbindex++ : farbindex;
+      lege(c, tiefe + 1, a, a + (x1 - x0) * anteil, fi);
+      a += (x1 - x0) * anteil;
+    }
+  };
+  lege(wurzel, 0, 0, 1, null);
+  return { breite, hoehe };
+}
+
+// Zeitachse: die Aeste der Wurzel wandern auf eine horizontale Linie, sortiert
+// nach der fruehesten Frist im jeweiligen Teilbaum (derselbe Rechner wie im
+// Gantt). Ohne jedes Datum bleibt ein Ast in einer festen Spalte am Rand,
+// statt zu verschwinden — verschwinden ist der teuerste Fehler dieser App.
+// Tiefer verschachtelte Punkte faechern von dort aus radial auf, abwechselnd
+// nach oben und unten, mit derselben Bogenrechnung wie beim Radial-Typ.
+function legeZeit(wurzel, kinder, blaetter, tiefstes, punkte){
+  const spanne = spannenRechner();
+  const aeste = kinder(wurzel);
+  const SCHRITT = 74;
+  const ACHSE_Y = Math.max(240, 70 + tiefstes * SCHRITT);
+  const RAND_X = 150, OHNE_BREITE = 190, SPUR = 190;
+
+  const mitDatum = [], ohneDatum = [];
+  for (const id of aeste){
+    const s = spanne(id);
+    (s ? mitDatum : ohneDatum).push(s ? { id, von: s.von } : { id });
+  }
+  mitDatum.sort((a, b) => a.von < b.von ? -1 : a.von > b.von ? 1 : 0);
+
+  const achseBreite = Math.max(420, mitDatum.length * SPUR);
+  const breite = Math.max(mindmapEl.clientWidth || 900,
+    RAND_X + achseBreite + (ohneDatum.length ? OHNE_BREITE : 0) + RAND_X);
+  const hoehe = Math.max(420, ACHSE_Y + tiefstes * SCHRITT + 150);
+
+  const thema = MINDMAP_THEMEN[mindmapFarbe];
+  const sonderPfade = [
+    { x1: RAND_X, y1: ACHSE_Y, x2: RAND_X + achseBreite, y2: ACHSE_Y, farbe: "var(--rule2)", dick: 1.5 }
+  ];
+  punkte.push({ id: wurzel, tiefe: 0, x: RAND_X * 0.5, y: ACHSE_Y, rechts: true, farbindex: null });
+
+  const legeFaecher = (id, tiefeRel, a0, a1, cx, cy, farbindex) => {
+    const k = kinder(id);
+    if (!k.length) return;
+    const gesamt = blaetter(id) || 1;
+    let a = a0;
+    for (const c of k){
+      const anteil = blaetter(c) / gesamt;
+      const w = a + (a1 - a0) * anteil / 2;
+      const r = (tiefeRel + 1) * SCHRITT;
+      const x = cx + Math.cos(w) * r, y = cy + Math.sin(w) * r;
+      punkte.push({ id: c, tiefe: tiefeRel + 1, x, y, rechts: Math.cos(w) >= 0, farbindex });
+      legeFaecher(c, tiefeRel + 1, a, a + (a1 - a0) * anteil, cx, cy, farbindex);
+      a += (a1 - a0) * anteil;
+    }
+  };
+
+  let farbindex = 0;
+  const legeAst = (id, x, y, oben) => {
+    const a0 = oben ? Math.PI * 1.15 : Math.PI * 0.15;
+    const a1 = oben ? Math.PI * 1.85 : Math.PI * 0.85;
+    punkte.push({ id, tiefe: 1, x, y, rechts: true, farbindex });
+    const linie = thema.aeste[farbindex % thema.aeste.length].linie;
+    sonderPfade.push({ x1: x, y1: y - 9, x2: x, y2: y + 9, farbe: linie, dick: 2.5 });
+    legeFaecher(id, 0, a0, a1, x, y, farbindex);
+    farbindex++;
+  };
+
+  mitDatum.forEach((z, i) => {
+    legeAst(z.id, RAND_X + achseBreite * ((i + 0.5) / mitDatum.length), ACHSE_Y, i % 2 === 0);
+  });
+  ohneDatum.forEach((z, i) => {
+    legeAst(z.id, RAND_X + achseBreite + OHNE_BREITE / 2,
+            ACHSE_Y + (i - (ohneDatum.length - 1) / 2) * 64, i % 2 === 0);
+  });
+
+  return { breite, hoehe, sonderPfade };
+}
+
+function mmBogen(a, b){
+  const mx = (a.x + b.x) / 2;
+  return "M" + a.x + " " + a.y + " C" + mx + " " + a.y + " " + mx + " " + b.y + " " + b.x + " " + b.y;
+}
+function mmKnick(a, b){
+  const my = (a.y + b.y) / 2;
+  return "M" + a.x + " " + a.y + " V" + my + " H" + b.x + " V" + b.y;
+}
+
+// Gemeinsam fuer die lebende Ansicht und den Export, damit beide nie
+// auseinanderlaufen: Radial haengt die Beschriftung seitlich an, Baumdiagramm
+// und Zeitachse zentrieren sie ueber dem Punkt; nur der Baum bekommt eckige
+// Kaesten.
+function mmKlassen(p, n, istWurzel){
+  const liste = ["mast"];
+  if (istWurzel) liste.push("mitte");
+  else if (mindmapTyp === "radial") liste.push(p.rechts ? "rechts" : "links");
+  else liste.push("flach");
+  if (mindmapTyp === "baum" && !istWurzel) liste.push("eckig");
+  if (istErledigt(n)) liste.push("erledigt");
+  if (istUeberfaellig(n)) liste.push("ueberfaellig");
+  return liste.join(" ");
+}
+
+// Gemeinsame Grundlage fuer die lebende Ansicht und den HTML-Export.
+// collapseAware=true laesst in der Mindmap zugeklappte Aeste (mmZu) wie
+// Blaetter zaehlen, damit sie im Bild keinen Platz beanspruchen — der Export
+// legt dagegen immer voll aus, sonst liessen sich dort keine Aeste mehr
+// AUFklappen, die beim Export gerade zu waren.
+function mindmapLayout(collapseAware){
+  const sichtbar = new Set(rowIndex.map(r => r.id));
+  const kinderEcht = id => (nodes[id] ? nodes[id].children.filter(c => sichtbar.has(c)) : []);
+  const kinderLayout = collapseAware ? (id => (mmZu.has(id) ? [] : kinderEcht(id))) : kinderEcht;
+
+  const blaetter = id => {
+    const k = kinderLayout(id);
+    return k.length ? k.reduce((s, c) => s + blaetter(c), 0) : 1;
+  };
+  let tiefstes = 0;
+  (function tiefeMessen(id, tiefe){
+    if (tiefe > tiefstes) tiefstes = tiefe;
+    for (const c of kinderLayout(id)) tiefeMessen(c, tiefe + 1);
+  })(zoomId, 0);
+  tiefstes = Math.max(1, tiefstes);
+
+  const punkte = [];
+  const ergebnis = mindmapTyp === "baum" ? legeBaum(zoomId, kinderLayout, blaetter, tiefstes, punkte)
+    : mindmapTyp === "zeit" ? legeZeit(zoomId, kinderLayout, blaetter, tiefstes, punkte)
+    : legeRadialWurzel(zoomId, kinderLayout, blaetter, tiefstes, punkte);
+
+  return { punkte, breite: ergebnis.breite, hoehe: ergebnis.hoehe,
+           sonderPfade: ergebnis.sonderPfade || [], kinderEcht };
+}
+
+function mindmapLeiste(){
+  const leiste = document.createElement("div");
+  leiste.className = "mmkopf";
+
+  const gruppe = document.createElement("div");
+  gruppe.className = "mmgruppe";
+
+  const feldTyp = document.createElement("div");
+  feldTyp.className = "mmfeld";
+  const bTyp = document.createElement("b"); bTyp.textContent = "Typ";
+  const typen = document.createElement("div");
+  typen.className = "mmtypen";
+  for (const t of MINDMAP_TYPEN){
+    const btn = document.createElement("button");
+    btn.className = "mmtyp" + (t === mindmapTyp ? " an" : "");
+    btn.textContent = MINDMAP_TYP_LABEL[t];
+    btn.addEventListener("click", () => { mindmapTyp = t; scheduleSave(); render(false); });
+    typen.appendChild(btn);
+  }
+  feldTyp.append(bTyp, typen);
+
+  const feldFarbe = document.createElement("div");
+  feldFarbe.className = "mmfeld";
+  const bFarbe = document.createElement("b"); bFarbe.textContent = "Farbe";
+  const farben = document.createElement("div");
+  farben.className = "mmfarben";
+  for (const f of MINDMAP_FARBEN){
+    const btn = document.createElement("button");
+    btn.className = "mmfarbe" + (f === mindmapFarbe ? " an" : "");
+    btn.title = f[0].toUpperCase() + f.slice(1);
+    btn.style.background = MINDMAP_THEMEN[f].aeste[0].bg;
+    const kern = document.createElement("i");
+    kern.style.background = MINDMAP_THEMEN[f].wurzel.bg;
+    btn.appendChild(kern);
+    btn.addEventListener("click", () => { mindmapFarbe = f; scheduleSave(); render(false); });
+    farben.appendChild(btn);
+  }
+  feldFarbe.append(bFarbe, farben);
+
+  gruppe.append(feldTyp, feldFarbe);
+
+  const aktionen = document.createElement("div");
+  aktionen.className = "mmaktionen";
+  const btnAuf = document.createElement("button");
+  btnAuf.className = "knopf";
+  btnAuf.textContent = "Alle aufklappen";
+  btnAuf.addEventListener("click", () => { mmZu.clear(); render(false); });
+  const btnExport = document.createElement("button");
+  btnExport.className = "knopf";
+  btnExport.textContent = "Als HTML exportieren";
+  btnExport.addEventListener("click", exportMindmapHTML);
+  aktionen.append(btnAuf, btnExport);
+
+  leiste.append(gruppe, aktionen);
+  return leiste;
+}
+
+function zeichneMindmap(){
+  mindmapEl.textContent = "";
+  mindmapEl.className = "mindmap typ-" + mindmapTyp;
+  mindmapEl.appendChild(mindmapLeiste());
+
+  const { punkte, breite, hoehe, sonderPfade, kinderEcht } = mindmapLayout(true);
+  const thema = MINDMAP_THEMEN[mindmapFarbe];
+
+  const karte = document.createElement("div");
+  karte.className = "mkarte";
+  karte.style.width = breite + "px";
+  karte.style.height = hoehe + "px";
 
   const wo = new Map(punkte.map(p => [p.id, p]));
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", "0 0 " + breite + " " + hoehe);
+  for (const sp of sonderPfade){
+    const linie = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    linie.setAttribute("x1", sp.x1); linie.setAttribute("y1", sp.y1);
+    linie.setAttribute("x2", sp.x2); linie.setAttribute("y2", sp.y2);
+    linie.setAttribute("stroke", sp.farbe); linie.setAttribute("stroke-width", sp.dick || 1.3);
+    svg.appendChild(linie);
+  }
   for (const p of punkte){
-    for (const cid of kinder(p.id)){
+    for (const cid of kinderEcht(p.id)){
       const k = wo.get(cid);
       if (!k) continue;
+      const farbe = k.farbindex == null ? "var(--rule2)" : thema.aeste[k.farbindex % thema.aeste.length].linie;
       const pfad = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      const mx = (p.x + k.x) / 2;
-      pfad.setAttribute("d", "M" + p.x + " " + p.y + " C" + mx + " " + p.y +
-                             " " + mx + " " + k.y + " " + k.x + " " + k.y);
+      pfad.setAttribute("d", mindmapTyp === "baum" ? mmKnick(p, k) : mmBogen(p, k));
       pfad.setAttribute("fill", "none");
-      pfad.setAttribute("stroke", "var(--rule2)");
-      pfad.setAttribute("stroke-width", "1");
+      pfad.setAttribute("stroke", farbe);
+      pfad.setAttribute("stroke-width", "1.3");
+      pfad.setAttribute("opacity", "0.85");
       svg.appendChild(pfad);
     }
   }
@@ -2932,27 +3238,146 @@ function zeichneMindmap(){
 
   for (const p of punkte){
     const n = nodes[p.id];
+    const istWurzel = p.id === zoomId;
+    const farbe = istWurzel ? thema.wurzel : thema.aeste[p.farbindex % thema.aeste.length];
     const b = document.createElement("button");
-    b.className = "mast" + (p.tiefe === 0 ? " mitte" : (p.rechts ? " rechts" : " links")) +
-                  (istErledigt(n) ? " erledigt" : "") +
-                  (istUeberfaellig(n) ? " ueberfaellig" : "");
+    b.className = mmKlassen(p, n, istWurzel);
     b.style.left = p.x + "px";
     b.style.top = p.y + "px";
+    b.style.background = farbe.bg;
+    b.style.color = farbe.fg;
     // Abgeschnittene Rohmarken helfen niemandem; den Zustand tragen hier
     // Durchstreichung und Rahmenfarbe.
     const kurz = n.text.replace(FRIST_RE, "").replace(PROZENT_RE, "")
                        .replace(PRIO_RE, "").replace(/\s{2,}/g, " ").trim();
-    b.innerHTML = schmuecke(kurz || n.text.trim() || "Ohne Text", false);
+    const hatKinder = kinderEcht(p.id).length > 0;
+    b.innerHTML = (hatKinder ? '<span class="mfalt">' + (mmZu.has(p.id) ? "+" : "–") + '</span>' : "")
+      + schmuecke(kurz || n.text.trim() || "Ohne Text", false);
     b.title = n.text.trim() || "Ohne Text";
-    b.addEventListener("click", () => { setzeAnsicht("gliederung"); zoomTo(p.id); });
+    b.addEventListener("click", e => {
+      if (hatKinder && e.target.closest(".mfalt")){
+        e.stopPropagation();
+        if (mmZu.has(p.id)) mmZu.delete(p.id); else mmZu.add(p.id);
+        render(false);
+        return;
+      }
+      setzeAnsicht("gliederung"); zoomTo(p.id);
+    });
     karte.appendChild(b);
   }
 
-  mindmapEl.appendChild(karte);
+  const flaeche = document.createElement("div");
+  flaeche.className = "mmflaeche";
+  flaeche.appendChild(karte);
+  mindmapEl.appendChild(flaeche);
   // auf die Mitte einrollen, sonst begaenne die Karte in der Ecke
-  mindmapEl.scrollLeft = (breite - mindmapEl.clientWidth) / 2;
-  mindmapEl.scrollTop = (hoehe - mindmapEl.clientHeight) / 2;
+  flaeche.scrollLeft = (breite - flaeche.clientWidth) / 2;
+  flaeche.scrollTop = (hoehe - flaeche.clientHeight) / 2;
 }
+
+// Eigenstaendige HTML-Datei aus dem aktuellen Stand der Mindmap — reine
+// Ansicht ohne Bearbeitung, aber mit demselben Auf- und Zuklappen. Layout
+// immer voll ausgelegt (mindmapLayout(false)), sonst liesse sich dort nichts
+// mehr aufklappen, was beim Export gerade zu war.
+function exportMindmapHTML(){
+  const { punkte, breite, hoehe, sonderPfade, kinderEcht } = mindmapLayout(false);
+  const thema = MINDMAP_THEMEN[mindmapFarbe];
+  const wo = new Map(punkte.map(p => [p.id, p]));
+  const kinderMap = {};
+
+  let pfade = "";
+  for (const sp of sonderPfade){
+    pfade += '<line x1="' + sp.x1 + '" y1="' + sp.y1 + '" x2="' + sp.x2 + '" y2="' + sp.y2 +
+      '" stroke="' + sp.farbe.replace("var(--rule2)", "#cbc6ba") + '" stroke-width="' + (sp.dick || 1.3) + '"/>';
+  }
+  for (const p of punkte){
+    kinderMap[p.id] = kinderEcht(p.id).filter(cid => wo.has(cid));
+    for (const cid of kinderMap[p.id]){
+      const k = wo.get(cid);
+      const farbe = k.farbindex == null ? "#cbc6ba" : thema.aeste[k.farbindex % thema.aeste.length].linie;
+      const d = mindmapTyp === "baum" ? mmKnick(p, k) : mmBogen(p, k);
+      pfade += '<path data-kante="' + p.id + '|' + cid + '" d="' + d +
+        '" fill="none" stroke="' + farbe + '" stroke-width="1.3" opacity="0.85"/>';
+    }
+  }
+
+  let knoten = "";
+  for (const p of punkte){
+    const n = nodes[p.id];
+    const istWurzel = p.id === zoomId;
+    const farbe = istWurzel ? thema.wurzel : thema.aeste[p.farbindex % thema.aeste.length];
+    const kurz = n.text.replace(FRIST_RE, "").replace(PROZENT_RE, "")
+                       .replace(PRIO_RE, "").replace(/\s{2,}/g, " ").trim();
+    const klassen = mmKlassen(p, n, istWurzel);
+    const hatKinder = kinderMap[p.id].length > 0;
+    const falt = hatKinder ? '<span class="mfalt">' + (mmZu.has(p.id) ? "+" : "–") + '</span>' : "";
+    knoten += '<div class="' + klassen + '" data-id="' + escHtml(p.id) + '" style="left:' + p.x +
+      'px;top:' + p.y + 'px;background:' + farbe.bg + ';color:' + farbe.fg + '">' +
+      falt + escHtml(kurz || n.text.trim() || "Ohne Text") + '</div>';
+  }
+
+  const titel = nodes[zoomId].text.trim() || "Mindmap";
+  const zuStart = JSON.stringify([...mmZu].filter(id => wo.has(id)));
+  const html = "<!doctype html>\n<html lang=\"de\"><head><meta charset=\"utf-8\">\n" +
+    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n" +
+    "<title>" + escHtml(titel) + " — Mindmap</title>\n<style>\n" + MINDMAP_EXPORT_CSS + "\n</style></head>\n<body>\n" +
+    "<header><h1>" + escHtml(titel) + "</h1><p>Exportiert aus dem Outliner, " + stamp().replace("_", " ") +
+    " — reine Ansicht ohne Bearbeitung. Äste lassen sich weiterhin auf- und zuklappen.</p></header>\n" +
+    "<div class=\"mmbuehne\"><div class=\"mkarte\" style=\"width:" + breite + "px;height:" + hoehe + "px\">\n" +
+    "<svg viewBox=\"0 0 " + breite + " " + hoehe + "\">" + pfade + "</svg>\n" + knoten + "\n</div></div>\n" +
+    "<" + "script>\n" +
+    "const KINDER = " + JSON.stringify(kinderMap) + ";\n" +
+    "let zu = new Set(" + zuStart + ");\n" +
+    "function sichtbarkeit(){\n" +
+    "  const versteckt = new Set();\n" +
+    "  (function markiere(id, v){\n" +
+    "    if (v) versteckt.add(id);\n" +
+    "    (KINDER[id] || []).forEach(c => markiere(c, v || zu.has(id)));\n" +
+    "  })(" + JSON.stringify(zoomId) + ", false);\n" +
+    "  document.querySelectorAll('.mast').forEach(el => { el.hidden = versteckt.has(el.dataset.id); });\n" +
+    "  document.querySelectorAll('path[data-kante]').forEach(el => {\n" +
+    "    const ziel = el.dataset.kante.split('|')[1];\n" +
+    "    el.style.display = versteckt.has(ziel) ? 'none' : '';\n" +
+    "  });\n" +
+    "  document.querySelectorAll('.mfalt').forEach(el => {\n" +
+    "    const id = el.closest('.mast').dataset.id;\n" +
+    "    el.textContent = zu.has(id) ? '+' : '–';\n" +
+    "  });\n" +
+    "}\n" +
+    "document.querySelectorAll('.mfalt').forEach(el => {\n" +
+    "  el.addEventListener('click', e => {\n" +
+    "    e.stopPropagation();\n" +
+    "    const id = el.closest('.mast').dataset.id;\n" +
+    "    if (zu.has(id)) zu.delete(id); else zu.add(id);\n" +
+    "    sichtbarkeit();\n" +
+    "  });\n" +
+    "});\n" +
+    "sichtbarkeit();\n" +
+    "<" + "/script>\n</body></html>";
+
+  download(safeName(zoomId) + "-mindmap_" + stamp() + ".html", html, "text/html");
+  toast("Mindmap als HTML exportiert");
+}
+
+const MINDMAP_EXPORT_CSS =
+  "*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}" +
+  "body{background:#f7f5f0;color:#1a1a18;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:26px}" +
+  "header{max-width:860px;margin:0 auto 18px}" +
+  "header h1{font-family:Georgia,'Iowan Old Style',serif;font-weight:400;font-size:22px;margin-bottom:6px}" +
+  "header p{font-size:13px;color:#54514b;line-height:1.5}" +
+  ".mmbuehne{overflow:auto;max-height:80vh;border:1px solid #e2ded4;border-radius:10px;background:#fffefb}" +
+  ".mkarte{position:relative}" +
+  ".mkarte svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}" +
+  ".mast{position:absolute;transform:translate(-50%,-50%);max-width:150px;font-size:12.5px;line-height:1.3;" +
+  "border:1px solid transparent;border-radius:20px;padding:5px 12px;white-space:nowrap;overflow:hidden;" +
+  "text-overflow:ellipsis;cursor:pointer}" +
+  ".mast.rechts{transform:translate(3px,-50%)}.mast.links{transform:translate(calc(-100% - 3px),-50%)}" +
+  ".mast.flach{transform:translate(-50%,-50%)}.mast.eckig{border-radius:6px}" +
+  ".mast.mitte{font-family:Georgia,'Iowan Old Style',serif;font-size:16px;max-width:220px;padding:7px 15px;" +
+  "transform:translate(-50%,-50%);border-color:#cbc6ba}" +
+  ".mast.erledigt{opacity:.55;text-decoration:line-through}" +
+  ".mast.ueberfaellig{border-color:#a8321f;border-width:2px}" +
+  ".mfalt{font-family:ui-monospace,monospace;font-size:10px;opacity:.75;margin-right:5px}";
 
 /* =========================================================================
    14 — Start

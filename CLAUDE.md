@@ -4,7 +4,7 @@ Arbeitsanweisung für Claude Code in diesem Repository.
 
 ## Was das hier ist
 
-Ein Outliner als **einzelne HTML-Datei** (`index.html`, rund 3000 Zeilen). Notizen, Aufgaben, Projekte und Wissen liegen in einer Baumstruktur; aus derselben Struktur sollen später weitere Ansichten entstehen. Konzept, Architektur und Stufenplan stehen in [KONZEPT.md](KONZEPT.md) — bitte vor größeren Änderungen lesen.
+Ein Outliner als **einzelne HTML-Datei** (`index.html`, rund 3400 Zeilen). Notizen, Aufgaben, Projekte und Wissen liegen in einer Baumstruktur; aus derselben Struktur sollen später weitere Ansichten entstehen. Konzept, Architektur und Stufenplan stehen in [KONZEPT.md](KONZEPT.md) — bitte vor größeren Änderungen lesen.
 
 ## Harte Regeln
 

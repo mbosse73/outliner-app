@@ -77,7 +77,7 @@ Oben rechts stehen vier Ansichten derselben Punkte; `Strg`+`K` führt ebenfalls 
 - **Gliederung** — schreiben und umbauen. Nur hier wird bearbeitet.
 - **Gantt** — ein Punkt mit Zeitraum wird zum Balken, einer mit bloßer Frist zur Raute. Ein übergeordneter Punkt ohne eigenes Datum fasst zusammen, was darunter liegt: vom frühesten Anfang bis zur spätesten Frist, auch bei zugeklapptem Zweig. Punkte ganz ohne Datum erscheinen nicht.
 - **Kalender** — in Monat, Woche und Tag. Ein Zeitraum läuft als Balken über die Tage und bricht am Sonntag um; überschneidet sich etwas, rückt es in die nächste Spur. Anders als im Gantt erscheint hier nur, was **selbst** ein Datum trägt — ein Monatsfeld hat wenig Platz, und eine Zusammenfassung nennt keinen Termin, den man wahrnehmen könnte.
-- **Mindmap** — derselbe Zweig radial angeordnet. Ein Klick springt in einen Punkt und wechselt zurück zur Gliederung.
+- **Mindmap** — derselbe Zweig als Radial, Baumdiagramm oder Zeitachse, je nach Wahl in der Leiste darüber; dort steht auch ein Farbthema (Tinte, Granit, Ozean) zur Wahl, unabhängig vom Typ. Äste lassen sich einzeln auf- und zuklappen — unabhängig vom Zuklappen in der Gliederung. Ein Klick auf einen Punkt springt hinein und wechselt zurück zur Gliederung; „Als HTML exportieren" (auch im Datei-Menü) legt eine eigenständige, offline lauffähige Datei der aktuellen Ansicht an, in der sich weiterhin klappen, aber nicht bearbeiten lässt.
 
 Der Kalender kennt **keine Uhrzeiten** — das Modell speichert Tage, keine Zeitpunkte. Die Tagesansicht zählt deshalb auf, was an einem Tag läuft, beginnt, endet oder fällig wird, statt nach der Uhr zu ordnen.
 

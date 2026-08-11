@@ -14,7 +14,7 @@ Vorbilder: Workflowy für globale Struktur, Tags, Suche und Fokusmodus. Bike Out
 
 - Kanban → Gruppierung nach `task.status`
 - Kalender und Gantt → Filter auf `task.start` und `task.due`
-- Mindmap → radiales Layout desselben Teilbaums
+- Mindmap → Radial, Baumdiagramm oder Zeitachse desselben Teilbaums, je nach gewähltem Typ
 - Aufgabenliste → Filter auf `task != null`
 
 Damit gibt es zwischen den Ansichten nichts zu synchronisieren.
@@ -54,7 +54,9 @@ Kanban mit frei definierbaren Spalten, Kalender in Tag/Woche/Monat, Gantt mit Ze
 
 Fertig sind **Gantt**, **Kalender** und **Mindmap**, umschaltbar über die Kopfzeile und die Palette. Alle drei sind Projektionen: sie lesen dieselbe Zeilenauswahl wie die Gliederung, also gelten Fokus und Suche dort unverändert.
 
-Im Gantt wird ein Punkt mit Zeitraum zum Balken, einer mit bloßer Frist zur Raute — der Meilenstein, den dieser Plan schon vorsah. Ein übergeordneter Punkt ohne eigenes Datum bekommt einen zusammenfassenden Balken vom frühesten Anfang bis zur spätesten Frist darunter; gerechnet wird über den ganzen Teilbaum, auch über zugeklappte Kinder. Undatierte Zweige erscheinen gar nicht. Die Mindmap ordnet denselben Zweig radial an, zeichnet die Verbindungen als SVG-Pfade und die Beschriftungen als HTML darüber.
+Im Gantt wird ein Punkt mit Zeitraum zum Balken, einer mit bloßer Frist zur Raute — der Meilenstein, den dieser Plan schon vorsah. Ein übergeordneter Punkt ohne eigenes Datum bekommt einen zusammenfassenden Balken vom frühesten Anfang bis zur spätesten Frist darunter; gerechnet wird über den ganzen Teilbaum, auch über zugeklappte Kinder. Undatierte Zweige erscheinen gar nicht.
+
+Die Mindmap zeichnet die Verbindungen als SVG-Pfade und die Beschriftungen als HTML darüber, in einem von drei Typen: **Radial** (der ursprüngliche Aufbau), **Baumdiagramm** (von oben nach unten, eckige Kästen) und **Zeitachse** (die Äste der Wurzel auf einer horizontalen Linie nach `spannenRechner()` sortiert, ohne Datum in einer festen Spalte am Rand — verschwinden ist der teuerste Fehler dieser App). Alle drei teilen dieselbe Blattzahl-Rechnung, damit sich nichts überlappt. Dazu ein Farbthema (Tinte, Granit, Ozean), das unabhängig vom Typ gewählt wird und jeden Ast im Teilbaum einheitlich einfärbt. Ein eigenes Klappen (`mmZu`, ein `Set` von Ids) blendet Äste in der Mindmap aus — unabhängig von `node.collapsed`, das die Gliederung betrifft, und nicht gespeichert. „Als HTML exportieren" (Datei-Menü und Palette) legt aus `mindmapLayout(false)` eine eigenständige Datei an: Layout und Klappen funktionieren darin weiter, Bearbeiten nicht.
 
 Der **Kalender** zeigt Monat, Woche und Tag. Ein Zeitraum läuft als Balken über die Tage und bricht am Wochenende um; Überschneidungen rücken in eigene Spuren. Anders als im Gantt gibt es keine Zusammenfassung — ein Monatsfeld hat wenig Platz, und ein Elternbalken nennt keinen wahrnehmbaren Termin. Weil das Modell nur Tage kennt, ordnet die Tagesansicht nicht nach der Uhr, sondern benennt den Zustand: läuft, beginnt, endet, fällig.
 
